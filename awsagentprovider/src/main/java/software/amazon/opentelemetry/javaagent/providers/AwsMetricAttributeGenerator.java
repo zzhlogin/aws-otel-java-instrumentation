@@ -418,7 +418,12 @@ final class AwsMetricAttributeGenerator implements MetricAttributeGenerator {
     Optional<String> remoteResourceIdentifier = Optional.empty();
     Optional<String> cloudformationPrimaryIdentifier = Optional.empty();
 
+    System.out.println("isAwsSDKSpan outside!!!!!");
+    System.out.println("span.getAttributes(): " + span.getAttributes());
+    System.out.println(isAwsSDKSpan(span));
     if (isAwsSDKSpan(span)) {
+      System.out.println("isAwsSDKSpan!!!!!");
+      System.out.println("span.getAttributes(): " + span.getAttributes());
       if (isKeyPresent(span, AWS_TABLE_NAME)) {
         remoteResourceType = Optional.of(NORMALIZED_DYNAMO_DB_SERVICE_NAME + "::Table");
         remoteResourceIdentifier =

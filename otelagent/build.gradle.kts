@@ -60,6 +60,7 @@ dependencies {
   compileOnly(agentDep)
 
   javaagentLibs(project(":awsagentprovider"))
+  javaagentLibs(project(":instrumentation:aws-sdk"))
   javaagentLibs(project(":instrumentation:log4j-2.13.2"))
   javaagentLibs(project(":instrumentation:logback-1.0"))
   javaagentLibs(project(":instrumentation:jmx-metrics"))
