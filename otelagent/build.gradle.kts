@@ -56,11 +56,16 @@ val shadowClasspath by configurations.creating {
 dependencies {
   // Ensure dependency doesn't leak into POMs by using compileOnly and shadow-specific configuration.
   val agentDep = create("io.opentelemetry.javaagent", "opentelemetry-javaagent")
+//  project(":instrumentation:aws-sdk").tasks.forEach { task ->
+//    println("Task names!!!")
+//    println(task.name)
+//  }
+//  val agentDep = project(":instrumentation:aws-sdk").tasks.named("extendedAgent", Jar::class).get().archiveFile
   shadowClasspath(agentDep)
   compileOnly(agentDep)
 
   javaagentLibs(project(":awsagentprovider"))
-  javaagentLibs(project(":instrumentation:aws-sdk"))
+//  javaagentLibs(project(":instrumentation:aws-sdk"))
   javaagentLibs(project(":instrumentation:log4j-2.13.2"))
   javaagentLibs(project(":instrumentation:logback-1.0"))
   javaagentLibs(project(":instrumentation:jmx-metrics"))

@@ -30,10 +30,10 @@ import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.matcher.ElementMatcher;
 
 @AutoService(InstrumentationModule.class)
-public class AwsSdkInstrumentationModule extends InstrumentationModule {
-  public AwsSdkInstrumentationModule() {
-    super("aws-sdk", "aws-sdk-2.2", "aws-sdk-2.2-core");
-    System.out.println("HERE AwsSdkInstrumentationModule!!!!!!!!!!!!!: ");
+public class AwsSdkPatchInstrumentationModule extends InstrumentationModule {
+  public AwsSdkPatchInstrumentationModule() {
+    super("aws-sdk-patch", "aws-sdk-zzh");
+    System.out.println("HERE AwsSdkPatchInstrumentationModule!!!!!!!!!!!!!: ");
   }
 
   @Override // Need

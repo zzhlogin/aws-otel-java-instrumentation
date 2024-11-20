@@ -20,6 +20,19 @@ plugins {
 
 base.archivesBaseName = "aws-instrumentation-awssdk-2.2"
 
+repositories {
+  mavenCentral()
+}
+
+configurations {
+  /*
+  We create a separate gradle configuration to grab a published Otel instrumentation agent.
+  We don't need the agent during development of this extension module.
+  This agent is used only during integration test.
+  */
+  create("otel") // Explicitly create the 'otel' configuration
+}
+
 dependencies {
   compileOnly("com.google.auto.service:auto-service:1.1.1")
   compileOnly("com.google.code.findbugs:jsr305:3.0.2")
@@ -31,5 +44,38 @@ dependencies {
   compileOnly("software.amazon.awssdk:aws-json-protocol:2.2.0")
   compileOnly("org.slf4j:slf4j-api:2.0.0")
   compileOnly("org.slf4j:slf4j-simple:2.0.0")
+  add("otel", "io.opentelemetry.javaagent:opentelemetry-javaagent:1.32.1")
 //  compileOnly("io.opentelemetry.instrumentation:opentelemetry-aws-sdk-2.2:1.32.1-alpha")
+}
+
+tasks.register<Jar>("extendedAgent") {
+  dependsOn(configurations.named("otel")) // Ensure the upstream agent JAR is downloaded.
+
+  archiveFileName.set("opentelemetry-javaagent.jar") // Sets the name of the output JAR file.
+
+  // Resolve the otel JAR file during the configuration phase
+  val otelJarFile = configurations.named("otel").get().singleFile
+
+  from(zipTree(otelJarFile)) // Unpacks the upstream OpenTelemetry agent into the new JAR.
+  println("File type: ${otelJarFile::class}")
+
+  from(tasks.named<com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar>("shadowJar").get().archiveFile) {
+    into("extensions") // Adds the custom extension into the extensions directory of the agent.
+  }
+  println("calling from type: ${otelJarFile::class}")
+
+  // Preserve the MANIFEST.MF file from the upstream javaagent.
+  doFirst {
+    // Move the 'from' outside the 'manifest' block
+    from(
+      zipTree(configurations.named("otel").get().singleFile).matching {
+        include("META-INF/MANIFEST.MF")
+      },
+    )
+    manifest {
+      attributes(
+        "Premain-Class" to "io.opentelemetry.javaagent.OpenTelemetryAgent",
+      )
+    }
+  }
 }
