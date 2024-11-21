@@ -20,6 +20,7 @@ import static software.amazon.opentelemetry.javaagent.instrumentation.awssdk_v2_
 
 import io.opentelemetry.api.GlobalOpenTelemetry;
 import io.opentelemetry.api.trace.Span;
+import io.opentelemetry.context.Scope;
 import io.opentelemetry.instrumentation.api.instrumenter.Instrumenter;
 import java.time.Instant;
 import java.util.logging.Logger;
@@ -36,28 +37,30 @@ import software.amazon.awssdk.http.SdkHttpResponse;
  * A {@link ExecutionInterceptor} for use as an SPI by the AWS SDK to automatically trace all
  * requests.
  */
-public class TracingExecutionInterceptor implements ExecutionInterceptor {
+public class AWSTracingExecutionInterceptor implements ExecutionInterceptor {
 
-  //  private final ExecutionInterceptor delegate =
-  //      AwsSdkSingletons.telemetry().newExecutionInterceptor();
   private static final String GEN_AI_SYSTEM_BEDROCK = "aws_bedrock";
   private static final ExecutionAttribute<io.opentelemetry.context.Context> CONTEXT_ATTRIBUTE =
-      new ExecutionAttribute<>(TracingExecutionInterceptor.class.getName() + ".Context");
+      new ExecutionAttribute<>(AWSTracingExecutionInterceptor.class.getName() + ".Context");
   private static final ExecutionAttribute<RequestSpanFinisher> REQUEST_FINISHER_ATTRIBUTE =
-      new ExecutionAttribute<>(TracingExecutionInterceptor.class.getName() + ".RequestFinisher");
+      new ExecutionAttribute<>(AWSTracingExecutionInterceptor.class.getName() + ".RequestFinisher");
   private static final ExecutionAttribute<ZZHAwsSdkRequest> AWS_SDK_REQUEST_ATTRIBUTE =
-      new ExecutionAttribute<>(TracingExecutionInterceptor.class.getName() + ".ZZHAwsSdkRequest");
+      new ExecutionAttribute<>(
+          AWSTracingExecutionInterceptor.class.getName() + ".ZZHAwsSdkRequest");
   private final AwsAdotInstrumenterFactory instrumenterFactory =
       new AwsAdotInstrumenterFactory(GlobalOpenTelemetry.get());
 
   private final FieldMapper fieldMapper = new FieldMapper();
   private static final Logger logger =
-      Logger.getLogger(TracingExecutionInterceptor.class.getName());
+      Logger.getLogger(AWSTracingExecutionInterceptor.class.getName());
+  private static final ExecutionAttribute<Scope> SCOPE_ATTRIBUTE =
+      new ExecutionAttribute<>(AWSTracingExecutionInterceptor.class.getName() + ".Scope");
 
   @Override // !!!!!!!!Important
   public SdkRequest modifyRequest(
       Context.ModifyRequest context, ExecutionAttributes executionAttributes) {
-    System.out.println("HERE TracingExecutionInterceptor!!!!!!!!!!!!!: ");
+    System.out.println(
+        "ADOT !! HERE AwsSdkPatchInstrumentationModule.modifyRequest!!!!!!!!!!!!!: ");
     io.opentelemetry.context.Context parentOtelContext = io.opentelemetry.context.Context.current();
     SdkRequest request = context.request();
 
@@ -81,7 +84,9 @@ public class TracingExecutionInterceptor implements ExecutionInterceptor {
         instrumenter.start(parentOtelContext, executionAttributes);
     RequestSpanFinisher requestFinisher = instrumenter::end;
 
-    Span span = Span.fromContext(otelContext);
+    Span span = Span.fromContext(parentOtelContext);
+    System.out.println("ADOT !! HERE Span span = Span.fromContext(otelContext)!!!!!!!!!!!!!: ");
+    System.out.println(span);
 
     try {
       ZZHAwsSdkRequest awsSdkRequest = ZZHAwsSdkRequest.ofSdkRequest(context.request());
@@ -93,6 +98,7 @@ public class TracingExecutionInterceptor implements ExecutionInterceptor {
       clearAttributes(executionAttributes);
       throw throwable;
     }
+    System.out.println("ADOT !! HERE returning the request successfully!!!!!!!!!!!!!: ");
     return request;
   }
 
@@ -111,6 +117,7 @@ public class TracingExecutionInterceptor implements ExecutionInterceptor {
       finisher.finish(
           otelContext, executionAttributes, new Response(httpResponse, context.response()), null);
     }
+    System.out.println("ADOT !! HERE afterExecution- otelContext!!!!!!!!!!!!!: ");
     clearAttributes(executionAttributes);
   }
 
@@ -140,7 +147,11 @@ public class TracingExecutionInterceptor implements ExecutionInterceptor {
   }
 
   private static void clearAttributes(ExecutionAttributes executionAttributes) {
-    executionAttributes.putAttribute(AWS_SDK_REQUEST_ATTRIBUTE, null);
+    Scope scope = executionAttributes.getAttribute(SCOPE_ATTRIBUTE);
+    if (scope != null) {
+      scope.close();
+    }
+    //    executionAttributes.putAttribute(AWS_SDK_REQUEST_ATTRIBUTE, null);
   }
 
   static io.opentelemetry.context.Context getContext(ExecutionAttributes attributes) {

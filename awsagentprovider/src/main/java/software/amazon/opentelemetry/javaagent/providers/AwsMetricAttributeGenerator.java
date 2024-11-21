@@ -420,6 +420,9 @@ final class AwsMetricAttributeGenerator implements MetricAttributeGenerator {
 
     System.out.println("isAwsSDKSpan outside!!!!!");
     System.out.println("span.getAttributes(): " + span.getAttributes());
+    System.out.println("span.getTraceId(): " + span.getTraceId());
+    System.out.println("span.getSpanId(): " + span.getSpanId());
+    System.out.println("span.getSpanContext(): " + span.getSpanContext());
     System.out.println(isAwsSDKSpan(span));
     if (isAwsSDKSpan(span)) {
       System.out.println("isAwsSDKSpan!!!!!");
@@ -510,6 +513,10 @@ final class AwsMetricAttributeGenerator implements MetricAttributeGenerator {
     if (!cloudformationPrimaryIdentifier.isPresent()) {
       cloudformationPrimaryIdentifier = remoteResourceIdentifier;
     }
+
+    System.out.println("isAwsSDKSpan done!!!!!");
+    System.out.println("remoteResourceIdentifier.get(): " + remoteResourceIdentifier);
+    System.out.println("remoteResourceType.get(): " + remoteResourceType);
 
     if (remoteResourceType.isPresent() && remoteResourceIdentifier.isPresent()) {
       builder.put(AWS_REMOTE_RESOURCE_TYPE, remoteResourceType.get());

@@ -33,7 +33,7 @@ import net.bytebuddy.matcher.ElementMatcher;
 public class AwsSdkPatchInstrumentationModule extends InstrumentationModule {
   public AwsSdkPatchInstrumentationModule() {
     super("aws-sdk-patch", "aws-sdk-zzh");
-    System.out.println("HERE AwsSdkPatchInstrumentationModule!!!!!!!!!!!!!: ");
+    System.out.println("ADOT !! HERE AwsSdkPatchInstrumentationModule!!!!!!!!!!!!!: ");
   }
 
   @Override // Need
@@ -58,15 +58,32 @@ public class AwsSdkPatchInstrumentationModule extends InstrumentationModule {
 
   @Override
   public void registerHelperResources(HelperResourceBuilder helperResourceBuilder) {
-    System.out.println("HERE registerHelperResources!!!!!!!!!!!!!: ");
-    helperResourceBuilder.register("software/amazon/awssdk/global/handlers/execution.interceptors");
+    System.out.println("ADOT !! HERE registerHelperResources!!!!!!!!!!!!!: ");
+    String resourcePath =
+        "META-INF/services/software/amazon/awssdk/global/handlers/execution.interceptors";
+    ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
+    if (classLoader == null) {
+      classLoader = this.getClass().getClassLoader(); // Fallback to the current class loader.
+    }
+
+    // Try to find the resource
+    java.net.URL resourceUrl = classLoader.getResource(resourcePath);
+    if (resourceUrl != null) {
+      System.out.println("ADOT !! Resource found at: " + resourceUrl);
+    } else {
+      System.out.println("ADOT !! Resource not found on the classpath: " + resourcePath);
+    }
+
+    helperResourceBuilder.register(
+        "software/amazon/awssdk/global/handlers/execution.interceptors",
+        "software/amazon/awssdk/global/handlers/execution.interceptors.invalid");
   }
 
   @Override
   public List<String> getAdditionalHelperClassNames() {
     return asList(
-        "software.amazon.opentelemetry.javaagent.instrumentation.awssdk_v2_2.TracingExecutionInterceptor",
-        "software.amazon.opentelemetry.javaagent.instrumentation.awssdk_v2_2.TracingExecutionInterceptor$RequestSpanFinisher",
+        "software.amazon.opentelemetry.javaagent.instrumentation.awssdk_v2_2.AWSTracingExecutionInterceptor",
+        "software.amazon.opentelemetry.javaagent.instrumentation.awssdk_v2_2.AWSTracingExecutionInterceptor$RequestSpanFinisher",
         "software.amazon.opentelemetry.javaagent.instrumentation.awssdk_v2_2.ZZHAwsSdkRequest",
         "software.amazon.opentelemetry.javaagent.instrumentation.awssdk_v2_2.AwsAdotInstrumenterFactory",
         "software.amazon.opentelemetry.javaagent.instrumentation.awssdk_v2_2.FieldMapper",
@@ -82,15 +99,6 @@ public class AwsSdkPatchInstrumentationModule extends InstrumentationModule {
         "software.amazon.opentelemetry.javaagent.instrumentation.awssdk_v2_2.AwsSdkRequestType",
         "software.amazon.opentelemetry.javaagent.instrumentation.awssdk_v2_2.Response");
   }
-
-  //  @Override
-  //  public void injectClasses(ClassInjector injector) {
-  //    injector
-  //        .proxyBuilder(
-  //
-  // "software.amazon.opentelemetry.javaagent.instrumentation.awssdk_v2_2.TracingExecutionInterceptor")
-  //        .inject(InjectionMode.CLASS_ONLY);
-  //  }
 
   @Override // Need
   public List<TypeInstrumentation> typeInstrumentations() {
@@ -111,12 +119,12 @@ public class AwsSdkPatchInstrumentationModule extends InstrumentationModule {
 
     @Override
     public void transform(TypeTransformer transformer) {
-      System.out.println("HERE transform!!!!!!!!!!!!!: ");
-      doTransform(transformer);
+      //      System.out.println("HERE transform!!!!!!!!!!!!!: ");
+      //      doTransform(transformer);
     }
   }
 
-  void doTransform(TypeTransformer transformer) {
-    // Nothing to transform, this type instrumentation is only used for injecting resources.
-  }
+  //  void doTransform(TypeTransformer transformer) {
+  //    // Nothing to transform, this type instrumentation is only used for injecting resources.
+  //  }
 }

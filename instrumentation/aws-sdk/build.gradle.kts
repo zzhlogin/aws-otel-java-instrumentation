@@ -20,10 +20,6 @@ plugins {
 
 base.archivesBaseName = "aws-instrumentation-awssdk-2.2"
 
-repositories {
-  mavenCentral()
-}
-
 configurations {
   /*
   We create a separate gradle configuration to grab a published Otel instrumentation agent.
@@ -36,19 +32,21 @@ configurations {
 dependencies {
   compileOnly("com.google.auto.service:auto-service:1.1.1")
   compileOnly("com.google.code.findbugs:jsr305:3.0.2")
-  compileOnly("io.opentelemetry.javaagent:opentelemetry-javaagent-extension-api:1.32.1-alpha")
-  compileOnly("io.opentelemetry.instrumentation:opentelemetry-instrumentation-api:1.32.1")
+  compileOnly("io.opentelemetry.javaagent:opentelemetry-javaagent-extension-api:1.32.1-adot2-alpha")
+  compileOnly("io.opentelemetry.instrumentation:opentelemetry-instrumentation-api:1.32.1-adot2")
   compileOnly("software.amazon.awssdk:aws-json-protocol:2.2.0")
   compileOnly("software.amazon.awssdk:aws-core:2.2.0")
   compileOnly("software.amazon.awssdk:sns:2.2.0")
   compileOnly("software.amazon.awssdk:aws-json-protocol:2.2.0")
   compileOnly("org.slf4j:slf4j-api:2.0.0")
   compileOnly("org.slf4j:slf4j-simple:2.0.0")
-  add("otel", "io.opentelemetry.javaagent:opentelemetry-javaagent:1.32.1")
+  add("otel", "io.opentelemetry.javaagent:opentelemetry-javaagent:1.32.1-adot2")
 //  compileOnly("io.opentelemetry.instrumentation:opentelemetry-aws-sdk-2.2:1.32.1-alpha")
 }
 
 tasks.register<Jar>("extendedAgent") {
+  dependsOn(tasks.named("jar"))
+
   dependsOn(configurations.named("otel")) // Ensure the upstream agent JAR is downloaded.
 
   archiveFileName.set("opentelemetry-javaagent.jar") // Sets the name of the output JAR file.
@@ -59,23 +57,23 @@ tasks.register<Jar>("extendedAgent") {
   from(zipTree(otelJarFile)) // Unpacks the upstream OpenTelemetry agent into the new JAR.
   println("File type: ${otelJarFile::class}")
 
-  from(tasks.named<com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar>("shadowJar").get().archiveFile) {
-    into("extensions") // Adds the custom extension into the extensions directory of the agent.
-  }
-  println("calling from type: ${otelJarFile::class}")
+  val projectJar = tasks.named<Jar>("jar").get().archiveFile.get().asFile
 
-  // Preserve the MANIFEST.MF file from the upstream javaagent.
+  from(projectJar) {
+    into("extensions") // Puts the JAR into the 'extensions' directory
+  }
+
   doFirst {
-    // Move the 'from' outside the 'manifest' block
-    from(
-      zipTree(configurations.named("otel").get().singleFile).matching {
+    manifest.from(
+      zipTree(otelJarFile).matching {
         include("META-INF/MANIFEST.MF")
-      },
+      }.singleFile,
     )
-    manifest {
-      attributes(
-        "Premain-Class" to "io.opentelemetry.javaagent.OpenTelemetryAgent",
-      )
-    }
+  }
+}
+
+tasks {
+  build {
+    dependsOn("extendedAgent")
   }
 }

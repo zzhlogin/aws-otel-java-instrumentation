@@ -93,3 +93,91 @@ class FieldMapper {
     return null;
   }
 }
+
+//  HERE After populateRequestAttributes!!!!!!!!!!!!!:
+// SdkSpan{
+//  traceId=673edf6205e6a290d144e607e7d81184,
+//        spanId=a930adc07653dac0,
+//        parentSpanContext=ImmutableSpanContext{
+//          traceId=673edf6205e6a290d144e607e7d81184,
+//          spanId=0e48d172ee959008,
+//          traceFlags=01,
+//          traceState=ArrayBasedTraceState{entries=[]},
+//          remote=false,
+//          valid=true
+//        },
+//        name=Sns.GetTopicAttributes,
+//        kind=CLIENT,
+//        attributes=AttributesMap
+//        {
+//          data=
+//          {
+//            thread.id=32,
+//            aws.sdk.descendant=true,
+//            aws.sns.topic.arn=arn:aws:sns:us-east-1:007003802740:test_topic,
+//            thread.name=http-nio-8080-exec-1,
+//            aws.local.operation=GET /sns-describe-topic-v2
+//          },
+//          capacity=128,
+//          totalAddedValues=5
+//        },
+//        status=ImmutableStatusData
+//        {
+//          statusCode=UNSET,
+//          description=
+//        },
+//        totalRecordedEvents=0,
+//        totalRecordedLinks=0,
+//        startEpochNanos=1732173667015533416,
+//        endEpochNanos=0
+// }
+//
+//
+// OTEL !! HERE Span span = Span.fromContext(otelContext)!!!!!!!!!!!!!:
+// SdkSpan{
+//  traceId=673edf6205e6a290d144e607e7d81184,
+//        spanId=0e48d172ee959008,
+//        parentSpanContext=ImmutableSpanContext{
+//        traceId=673edf6205e6a290d144e607e7d81184,
+//        spanId=a1bcd70da8da6cd1,
+//        traceFlags=01,
+//        traceState=ArrayBasedTraceState{entries=[]},
+//        remote=false,
+//        valid=true
+//        },
+//        name=Sns.GetTopicAttributes,
+//        ind=CLIENT,
+//        attributes=AttributesMap
+//          {
+//            data=
+//            {
+//              aws.agent=java-aws-sdk,
+//              thread.id=32,
+//              rpc.system=aws-api,
+//              thread.name=http-nio-8080-exec-1,
+//              aws.local.operation=GET /sns-describe-topic-v2,
+//              rpc.method=GetTopicAttributes,
+//              rpc.service=Sns
+//            },
+//            capacity=128,
+//            totalAddedValues=7
+//          },
+//        status=ImmutableStatusData
+//          {
+//            statusCode=UNSET,
+//          description=
+//          },
+//        totalRecordedEvents=0,
+//        totalRecordedLinks=0, s
+//        tartEpochNanos=1732173667013563416,
+//        endEpochNanos=0
+// }
+//
+//
+// JAVA_TOOL_OPTIONS=" -javaagent:aws-opentelemetry-agent-1.33.0-SNAPSHOT.jar"
+// OTEL_METRICS_EXPORTER=none OTEL_LOGS_EXPORT=none OTEL_AWS_APPLICATION_SIGNALS_ENABLED=true
+// OTEL_AWS_APPLICATION_SIGNALS_EXPORTER_ENDPOINT=http://localhost:4316/v1/metrics
+// OTEL_EXPORTER_OTLP_PROTOCOL=http/protobuf
+// OTEL_EXPORTER_OTLP_TRACES_ENDPOINT=http://localhost:4316/v1/traces
+// OTEL_RESOURCE_ATTRIBUTES="service.name=patch-instrumentation-service" java -jar
+// springboot-0.0.1-SNAPSHOT.jar

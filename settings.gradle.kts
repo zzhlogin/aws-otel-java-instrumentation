@@ -29,8 +29,8 @@ pluginManagement {
 
 dependencyResolutionManagement {
   repositories {
-    mavenCentral()
     mavenLocal()
+    mavenCentral()
 
     maven {
       setUrl("https://oss.sonatype.org/content/repositories/snapshots")
@@ -41,7 +41,7 @@ dependencyResolutionManagement {
 include(":awsagentprovider")
 include(":awspropagator")
 include(":dependencyManagement")
-//include(":instrumentation:aws-sdk")
+include(":instrumentation:aws-sdk")
 include(":instrumentation:logback-1.0")
 include(":instrumentation:log4j-2.13.2")
 include(":instrumentation:jmx-metrics")
